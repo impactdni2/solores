@@ -62,7 +62,7 @@ pub struct Args {
         long,
         short,
         help = "solana-program dependency version for generated crate",
-        default_value = "^2.0"
+        default_value = "^2.1"
     )]
     pub solana_program_vers: String,
 
