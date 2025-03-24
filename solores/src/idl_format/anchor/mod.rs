@@ -47,7 +47,7 @@ impl IdlFormat for AnchorIdl {
     }
 
     fn program_version(&self) -> &str {
-        &self.metadata.name
+        &self.metadata.version
     }
 
     fn program_address(&self) -> Option<&str> {
