@@ -14,7 +14,7 @@ pub struct ErrorEnumVariant {
 impl ToTokens for ErrorEnumVariant {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let variant_ident = format_ident!("{}", self.name.to_pascal_case());
-        let msg = &self.msg;
+        let msg = &self.msg.as_ref().unwrap_or(&self.name);
         let code_literal = LitInt::new(&self.code.to_string(), Span::call_site());
         tokens.extend(quote! {
             #[error(#msg)]
