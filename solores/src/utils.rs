@@ -19,7 +19,7 @@ pub const PUBKEY_TOKEN: &str = "Pubkey";
 
 pub fn primitive_or_pubkey_to_token(s: &str) -> String {
     match s {
-        "publicKey" => PUBKEY_TOKEN.to_owned(),
+        "pubkey" | "publicKey" => PUBKEY_TOKEN.to_owned(),
         "string" => s.to_pascal_case(),
         "bytes" => {
             #[cfg(feature = "bytes_to_u8")]
