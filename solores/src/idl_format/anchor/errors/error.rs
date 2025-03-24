@@ -8,7 +8,7 @@ use syn::LitInt;
 pub struct ErrorEnumVariant {
     code: u32,
     name: String,
-    msg: String,
+    msg: Option<String>,
 }
 
 impl ToTokens for ErrorEnumVariant {

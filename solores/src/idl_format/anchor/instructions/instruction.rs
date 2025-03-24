@@ -624,7 +624,7 @@ impl NamedInstruction {
         let mut writables = accounts
             .iter()
             .filter_map(|a| {
-                if a.is_mut {
+                if a.writable {
                     let name = a.field_ident();
                     Some(quote! {
                         accounts.#name
@@ -658,7 +658,7 @@ impl NamedInstruction {
         let mut signers = accounts
             .iter()
             .filter_map(|a| {
-                if a.is_signer {
+                if a.signer {
                     let name = a.field_ident();
                     Some(quote! {
                         accounts.#name
@@ -779,8 +779,10 @@ impl IxAccountEntry {
 #[serde(rename_all = "camelCase")]
 pub struct IxAccount {
     pub name: String,
-    pub is_mut: bool,
-    pub is_signer: bool,
+    #[serde(default)]
+    pub writable: bool,
+    #[serde(default)]
+    pub signer: bool,
 }
 
 impl IxAccount {
@@ -789,12 +791,12 @@ impl IxAccount {
     }
 
     pub fn is_privileged(&self) -> bool {
-        self.is_mut || self.is_signer
+        self.writable || self.signer
     }
 
     pub fn to_keys_account_meta_tokens(&self) -> TokenStream {
-        let is_writable_arg = LitBool::new(self.is_mut, Span::call_site());
-        let is_signer_arg = LitBool::new(self.is_signer, Span::call_site());
+        let is_writable_arg = LitBool::new(self.writable, Span::call_site());
+        let is_signer_arg = LitBool::new(self.signer, Span::call_site());
         let name = self.field_ident();
         quote! {
             AccountMeta {

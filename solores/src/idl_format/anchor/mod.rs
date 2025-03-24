@@ -24,9 +24,8 @@ pub mod typedefs;
 
 #[derive(Deserialize)]
 pub struct AnchorIdl {
-    pub name: String,
-    pub version: String,
-    pub metadata: Option<Metadata>,
+    pub address: String,
+    pub metadata: Metadata,
     pub accounts: Option<Vec<NamedAccount>>,
     pub types: Option<Vec<NamedType>>,
     pub instructions: Option<Vec<NamedInstruction>>,
@@ -36,20 +35,23 @@ pub struct AnchorIdl {
 
 #[derive(Deserialize)]
 pub struct Metadata {
-    pub address: String,
+    pub name: String,
+    pub version: String,
+    pub spec: String,
+    pub description: String,
 }
 
 impl IdlFormat for AnchorIdl {
     fn program_name(&self) -> &str {
-        &self.name
+        &self.metadata.name
     }
 
     fn program_version(&self) -> &str {
-        &self.version
+        &self.metadata.name
     }
 
     fn program_address(&self) -> Option<&str> {
-        self.metadata.as_ref().map(|m| m.address.as_ref())
+        Some(&self.address)
     }
 
     /// Anchor IDLs dont seem to have an identifier,
