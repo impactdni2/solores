@@ -62,7 +62,7 @@ pub struct Args {
         long,
         short,
         help = "solana-program dependency version for generated crate",
-        default_value = "^2.1"
+        default_value = "workspace = true"
     )]
     pub solana_program_vers: String,
 
@@ -70,44 +70,50 @@ pub struct Args {
         long,
         short,
         help = "borsh dependency version for generated crate",
-        default_value = "^1.5"
+        default_value = "workspace = true"
     )]
     pub borsh_vers: String,
 
     #[arg(
         long,
         help = "thiserror dependency version for generated crate",
-        default_value = "^1.0"
+        default_value = "workspace = true"
     )]
     pub thiserror_vers: String,
 
     #[arg(
         long,
         help = "num-derive dependency version for generated crate",
-        default_value = "0.4.2"
+        default_value = "workspace = true"
     )]
     pub num_derive_vers: String,
 
     #[arg(
         long,
         help = "num-traits dependency version for generated crate",
-        default_value = "^0.2"
+        default_value = "workspace = true"
     )]
     pub num_traits_vers: String,
 
     #[arg(
         long,
         help = "serde dependency version for generated crate",
-        default_value = "^1.0"
+        default_value = "workspace = true"
     )]
     pub serde_vers: String,
 
     #[arg(
         long,
         help = "bytemuck dependency version for generated crate",
-        default_value = "^1.16"
+        default_value = "workspace = true"
     )]
     pub bytemuck_vers: String,
+
+    #[arg(long, help = "write gitignore file", default_value = "false")]
+    pub write_gitignore: bool,
+
+    #[arg(long, help = "cargo edition", default_value = "2024")]
+    pub cargo_edition: String,
 }
 
 /// The CLI entrypoint
@@ -140,7 +146,9 @@ pub fn main() {
     fs::create_dir_all(args.output_dir.join("src/")).unwrap();
 
     // TODO: multithread, 1 thread per generated file
-    write_gitignore(&args).unwrap();
+    if args.write_gitignore {
+        write_gitignore(&args).unwrap();
+    }
     write_cargotoml(&args, idl.as_ref()).unwrap();
     write_lib(&args, idl.as_ref()).unwrap();
 

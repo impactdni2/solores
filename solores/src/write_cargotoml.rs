@@ -27,17 +27,25 @@ pub fn write_cargotoml(args: &Args, idl: &dyn IdlFormat) -> std::io::Result<()> 
 pub struct CargoToml<'a> {
     pub package: Package<'a>,
     pub dependencies: Map<String, Value>,
+    pub features: Map<String, Value>,
 }
 
 impl<'a> CargoToml<'a> {
     pub fn from_args_and_idl(args: &'a Args, idl: &'a dyn IdlFormat) -> Self {
+        let mut features = Map::new();
+        features.insert(
+            "serde".into(),
+            Value::Array(vec![Value::String("dep:serde".into())]),
+        );
+
         Self {
             package: Package {
                 name: &args.output_crate_name,
                 version: idl.program_version(),
-                edition: "2021",
+                edition: &args.cargo_edition,
             },
             dependencies: idl.dependencies(args),
+            features,
         }
     }
 }
