@@ -193,6 +193,23 @@ impl NamedInstruction {
         });
     }
 
+    /// From <&XKeys> for Vec<AccountMeta>
+    pub fn write_from_keys_for_meta_vec(&self, tokens: &mut TokenStream) {
+        if !self.has_accounts() {
+            return;
+        }
+        let keys_ident = self.keys_ident();
+        let accounts_len_ident = self.accounts_len_ident();
+        tokens.extend(quote! {
+            impl From<#keys_ident> for Vec<AccountMeta> {
+                fn from(keys: #keys_ident) -> Self {
+                    let accounts: [AccountMeta; #accounts_len_ident] = keys.into();
+                    Vec::from(accounts)
+                }
+            }
+        });
+    }
+
     /// From <[Pubkey]> for XKeys
     pub fn write_from_pubkey_arr_for_keys(&self, tokens: &mut TokenStream, accounts: &[IxAccount]) {
         if !self.has_accounts() {
@@ -725,6 +742,7 @@ impl ToTokens for NamedInstruction {
         self.write_keys_struct(tokens, &accounts);
         self.write_from_accounts_for_keys(tokens, &accounts);
         self.write_from_keys_for_meta_arr(tokens, &accounts);
+        self.write_from_keys_for_meta_vec(tokens);
         self.write_from_pubkey_arr_for_keys(tokens, &accounts);
         self.write_from_accounts_for_account_info_arr(tokens, &accounts);
         self.write_from_account_info_arr_for_accounts(tokens, &accounts);
