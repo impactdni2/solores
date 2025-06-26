@@ -797,9 +797,9 @@ impl IxAccountEntry {
 #[serde(rename_all = "camelCase")]
 pub struct IxAccount {
     pub name: String,
-    #[serde(default)]
+    #[serde(default, alias = "isMut")]
     pub writable: bool,
-    #[serde(default)]
+    #[serde(default, alias = "isSigner")]
     pub signer: bool,
 }
 
