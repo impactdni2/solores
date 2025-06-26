@@ -72,8 +72,11 @@ impl NamedType {
         };
 
         // Check if this type should use zero-copy derives from CLI args or IDL serialization field
-        let use_zero_copy = cli_args.zero_copy.iter().any(|e| e == &self.name) ||
-            self.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
+        let use_zero_copy = cli_args.zero_copy.iter().any(|e| e == &self.name)
+            || self
+                .serialization
+                .as_ref()
+                .map_or(false, |s| s == "bytemuckunsafe");
 
         // Generate repr attribute based on CLI args or IDL repr field
         let repr_attr = if let Some(repr) = &self.repr {
@@ -98,7 +101,7 @@ impl NamedType {
                 #[derive(Clone, Debug, BorshDeserialize, BorshSerialize, PartialEq)]
             }
         };
-        
+
         quote! {
             #repr_attr
             #derive
