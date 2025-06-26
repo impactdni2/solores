@@ -76,7 +76,13 @@ impl NamedType {
             || self
                 .serialization
                 .as_ref()
-                .map_or(false, |s| s == "bytemuckunsafe");
+                .map_or(false, |s| s == "bytemuck");
+        
+        // Check if this type should use unsafe bytemuck
+        let use_unsafe_bytemuck = self
+            .serialization
+            .as_ref()
+            .map_or(false, |s| s == "bytemuckunsafe");
 
         // Generate repr attribute based on CLI args or IDL repr field
         let repr_attr = if let Some(repr) = &self.repr {
@@ -87,7 +93,7 @@ impl NamedType {
             } else {
                 quote! { #[repr(#kind)] }
             }
-        } else if use_zero_copy {
+        } else if use_zero_copy || use_unsafe_bytemuck {
             quote! { #[repr(C)] }
         } else {
             TokenStream::new()
@@ -97,10 +103,23 @@ impl NamedType {
             quote! {
                 #[derive(Clone, Debug, BorshDeserialize, BorshSerialize, PartialEq, Pod, Copy, Zeroable)]
             }
+        } else if use_unsafe_bytemuck {
+            quote! {
+                #[derive(Clone, Debug, BorshDeserialize, BorshSerialize, PartialEq, Copy)]
+            }
         } else {
             quote! {
                 #[derive(Clone, Debug, BorshDeserialize, BorshSerialize, PartialEq)]
             }
+        };
+
+        let unsafe_impls = if use_unsafe_bytemuck {
+            quote! {
+                unsafe impl Pod for #name {}
+                unsafe impl Zeroable for #name {}
+            }
+        } else {
+            TokenStream::new()
         };
 
         quote! {
@@ -110,6 +129,8 @@ impl NamedType {
             pub struct #name {
                 #typedef_struct
             }
+            
+            #unsafe_impls
         }
     }
 }

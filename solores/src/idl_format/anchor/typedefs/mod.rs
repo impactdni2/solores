@@ -22,8 +22,9 @@ impl IdlCodegenModule for TypedefsCodegenModule<'_> {
         };
         for a in self.named_types {
             let use_zero_copy = self.cli_args.zero_copy.iter().any(|e| e == &a.name) ||
-                a.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
-            if use_zero_copy {
+                a.serialization.as_ref().map_or(false, |s| s == "bytemuck");
+            let use_unsafe_bytemuck = a.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
+            if use_zero_copy || use_unsafe_bytemuck {
                 res.extend(quote! {
                     use bytemuck::{Pod, Zeroable};
                 });
