@@ -8,6 +8,7 @@ use crate::{idl_format::IdlFormat, utils::open_file_create_overwrite, Args};
 pub const BORSH_CRATE: &str = "borsh";
 pub const BYTEMUCK_CRATE: &str = "bytemuck";
 pub const SERDE_CRATE: &str = "serde";
+pub const SERDE_BYTES_CRATE: &str = "serde_bytes";
 pub const SOLANA_PROGRAM_CRATE: &str = "solana-program";
 pub const THISERROR_CRATE: &str = "thiserror";
 pub const NUM_DERIVE_CRATE: &str = "num-derive";
@@ -35,7 +36,10 @@ impl<'a> CargoToml<'a> {
         let mut features = Map::new();
         features.insert(
             "serde".into(),
-            Value::Array(vec![Value::String("dep:serde".into())]),
+            Value::Array(vec![
+                Value::String("dep:serde".into()),
+                Value::String("dep:serde_bytes".into()),
+            ]),
         );
 
         Self {

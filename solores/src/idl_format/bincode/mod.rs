@@ -2,8 +2,8 @@ use serde::Deserialize;
 use toml::{map::Map, Value};
 
 use crate::write_cargotoml::{
-    DependencyValue, NUM_DERIVE_CRATE, NUM_TRAITS_CRATE, SERDE_CRATE, SOLANA_PROGRAM_CRATE,
-    THISERROR_CRATE,
+    DependencyValue, NUM_DERIVE_CRATE, NUM_TRAITS_CRATE, SERDE_BYTES_CRATE, SERDE_CRATE,
+    SOLANA_PROGRAM_CRATE, THISERROR_CRATE,
 };
 
 use super::{IdlCodegenModule, IdlFormat};
@@ -81,6 +81,10 @@ impl IdlFormat for BincodeIdl {
             DependencyValue(&args.solana_program_vers).into(),
         );
         map.insert(SERDE_CRATE.into(), DependencyValue(&args.serde_vers).into());
+        map.insert(
+            SERDE_BYTES_CRATE.into(),
+            DependencyValue(&args.serde_bytes_vers).into(),
+        );
         if self.errors.is_some() {
             map.insert(
                 THISERROR_CRATE.into(),

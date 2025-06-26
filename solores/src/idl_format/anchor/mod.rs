@@ -3,7 +3,8 @@ use toml::{map::Map, Value};
 
 use crate::write_cargotoml::{
     DependencyValue, FeaturesDependencyValue, OptionalDependencyValue, BORSH_CRATE, BYTEMUCK_CRATE,
-    NUM_DERIVE_CRATE, NUM_TRAITS_CRATE, SERDE_CRATE, SOLANA_PROGRAM_CRATE, THISERROR_CRATE,
+    NUM_DERIVE_CRATE, NUM_TRAITS_CRATE, SERDE_BYTES_CRATE, SERDE_CRATE, SOLANA_PROGRAM_CRATE,
+    THISERROR_CRATE,
 };
 
 use super::{IdlCodegenModule, IdlFormat};
@@ -113,6 +114,10 @@ impl IdlFormat for AnchorIdl {
         map.insert(
             SERDE_CRATE.into(),
             OptionalDependencyValue(DependencyValue(&args.serde_vers)).into(),
+        );
+        map.insert(
+            SERDE_BYTES_CRATE.into(),
+            OptionalDependencyValue(DependencyValue(&args.serde_bytes_vers)).into(),
         );
         if self.errors.is_some() {
             map.insert(
