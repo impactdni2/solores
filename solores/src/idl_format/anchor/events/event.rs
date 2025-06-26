@@ -94,11 +94,13 @@ mod tests {
         let field1 = TypedefField {
             name: "field1".to_string(),
             r#type: TypedefFieldType::PrimitiveOrPubkey("u32".into()),
+            docs: None,
         };
 
         let field2 = TypedefField {
             name: "field2".to_string(),
             r#type: TypedefFieldType::PrimitiveOrPubkey("String".into()),
+            docs: None,
         };
 
         // Create an EventType with the fields.
