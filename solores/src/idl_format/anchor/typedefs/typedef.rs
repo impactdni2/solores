@@ -71,9 +71,26 @@ impl NamedType {
             }
         };
 
-        let derive = if cli_args.zero_copy.iter().any(|e| e == &self.name) {
+        // Check if this type should use zero-copy derives from CLI args or IDL serialization field
+        let use_zero_copy = cli_args.zero_copy.iter().any(|e| e == &self.name) ||
+            self.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
+
+        // Generate repr attribute based on CLI args or IDL repr field
+        let repr_attr = if let Some(repr) = &self.repr {
+            let kind = format_ident!("{}", repr.kind);
+            if repr.packed {
+                quote! { #[repr(packed, #kind)] }
+            } else {
+                quote! { #[repr(#kind)] }
+            }
+        } else if use_zero_copy {
+            quote! { #[repr(C)] }
+        } else {
+            TokenStream::new()
+        };
+
+        let derive = if use_zero_copy {
             quote! {
-                #[repr(C)]
                 #[derive(Clone, Debug, BorshDeserialize, BorshSerialize, PartialEq, Pod, Copy, Zeroable)]
             }
         } else {
@@ -81,7 +98,9 @@ impl NamedType {
                 #[derive(Clone, Debug, BorshDeserialize, BorshSerialize, PartialEq)]
             }
         };
+        
         quote! {
+            #repr_attr
             #derive
             #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
             pub struct #name {

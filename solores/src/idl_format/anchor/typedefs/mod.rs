@@ -21,7 +21,9 @@ impl IdlCodegenModule for TypedefsCodegenModule<'_> {
             use borsh::{BorshDeserialize, BorshSerialize};
         };
         for a in self.named_types {
-            if self.cli_args.zero_copy.iter().any(|e| e == &a.name) {
+            let use_zero_copy = self.cli_args.zero_copy.iter().any(|e| e == &a.name) ||
+                a.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
+            if use_zero_copy {
                 res.extend(quote! {
                     use bytemuck::{Pod, Zeroable};
                 });
