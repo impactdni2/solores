@@ -5,7 +5,7 @@ use std::str::FromStr;
 use heck::{ToPascalCase, ToSnakeCase};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use syn::Index;
 use void::Void;
 
@@ -13,10 +13,45 @@ use crate::utils::{
     conditional_pascal_case, primitive_or_pubkey_to_token, string_or_struct, PUBKEY_TOKEN,
 };
 
+// Custom struct to handle both string and object formats for "defined"
+#[derive(Deserialize)]
+#[serde(untagged)]
+pub enum DefinedType {
+    String(String),
+    Object { name: String },
+}
+
+impl DefinedType {
+    pub fn name(&self) -> &str {
+        match self {
+            DefinedType::String(s) => s,
+            DefinedType::Object { name } => name,
+        }
+    }
+}
+
+// Custom deserializer for the defined field
+fn deserialize_defined<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let defined_type = DefinedType::deserialize(deserializer)?;
+    Ok(defined_type.name().to_string())
+}
+
 #[derive(Deserialize)]
 pub struct NamedType {
     pub name: String,
     pub r#type: TypedefType,
+    pub docs: Option<Vec<String>>,
+    pub serialization: Option<String>,
+    pub repr: Option<Repr>,
+}
+
+#[derive(Deserialize)]
+pub struct Repr {
+    pub kind: String,
+    pub packed: bool,
 }
 
 impl NamedType {
@@ -73,6 +108,7 @@ pub struct TypedefField {
     pub name: String,
     #[serde(deserialize_with = "string_or_struct")]
     pub r#type: TypedefFieldType,
+    pub docs: Option<Vec<String>>,
 }
 
 /// All instances should be annotated with
@@ -83,6 +119,7 @@ pub enum TypedefFieldType {
     PrimitiveOrPubkey(String),
 
     // rest handled by string_or_struct's struct
+    #[serde(deserialize_with = "deserialize_defined")]
     defined(String),
     array(TypedefFieldArray),
 
