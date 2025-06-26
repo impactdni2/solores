@@ -80,7 +80,8 @@ impl NamedType {
 
         // Generate repr attribute based on CLI args or IDL repr field
         let repr_attr = if let Some(repr) = &self.repr {
-            let kind = format_ident!("{}", repr.kind);
+            let kind = if repr.kind == "c" { "C" } else { &repr.kind };
+            let kind = format_ident!("{}", kind);
             if repr.packed {
                 quote! { #[repr(packed, #kind)] }
             } else {
