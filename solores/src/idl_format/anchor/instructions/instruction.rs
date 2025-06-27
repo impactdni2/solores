@@ -263,6 +263,23 @@ impl NamedInstruction {
         });
     }
 
+    /// From <XAccounts> for Vec<AccountInfo>
+    pub fn write_from_accounts_for_account_info_vec(&self, tokens: &mut TokenStream) {
+        if !self.has_accounts() {
+            return;
+        }
+        let accounts_ident = self.accounts_ident();
+        let accounts_len_ident = self.accounts_len_ident();
+        tokens.extend(quote! {
+            impl<'info> From<#accounts_ident<'_, 'info>> for Vec<AccountInfo<'info>> {
+                fn from(accounts: #accounts_ident<'_, 'info>) -> Self {
+                    let accounts_array: [AccountInfo<'info>; #accounts_len_ident] = accounts.into();
+                    Vec::from(accounts_array)
+                }
+            }
+        });
+    }
+
     /// From <&[AccountInfo]> for XAccounts
     pub fn write_from_account_info_arr_for_accounts(
         &self,
@@ -745,6 +762,7 @@ impl ToTokens for NamedInstruction {
         self.write_from_keys_for_meta_vec(tokens);
         self.write_from_pubkey_arr_for_keys(tokens, &accounts);
         self.write_from_accounts_for_account_info_arr(tokens, &accounts);
+        self.write_from_accounts_for_account_info_vec(tokens);
         self.write_from_account_info_arr_for_accounts(tokens, &accounts);
 
         self.write_discm(tokens);
