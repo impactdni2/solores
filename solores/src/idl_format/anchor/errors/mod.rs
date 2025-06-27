@@ -20,9 +20,8 @@ impl IdlCodegenModule for ErrorsCodegenModule<'_> {
     fn gen_head(&self) -> TokenStream {
         quote! {
             use solana_program::{
-                decode_error::DecodeError,
                 msg,
-                program_error::{PrintProgramError, ProgramError},
+                program_error::ProgramError,
             };
             use thiserror::Error;
         }
@@ -49,24 +48,6 @@ impl IdlCodegenModule for ErrorsCodegenModule<'_> {
                 }
             }
 
-            impl<T> DecodeError<T> for #error_enum_ident {
-                fn type_of() -> &'static str {
-                    #error_enum_ident_str
-                }
-            }
-
-            impl PrintProgramError for #error_enum_ident {
-                fn print<E>(&self)
-                where
-                    E: 'static
-                        + std::error::Error
-                        + DecodeError<E>
-                        + PrintProgramError
-                        + num_traits::FromPrimitive,
-                {
-                    msg!(&self.to_string());
-                }
-            }
         }
     }
 }
