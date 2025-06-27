@@ -62,7 +62,7 @@ impl NamedType {
             TypedefType::r#struct(typedef_struct) => typedef_struct,
             TypedefType::r#enum(typedef_enum) => {
                 return quote! {
-                    #[derive(Clone, Debug, BorshDeserialize, BorshSerialize, PartialEq)]
+                    #[derive(Clone, Copy, Debug, BorshDeserialize, BorshSerialize, PartialEq)]
                     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
                     pub enum #name {
                         #typedef_enum
@@ -109,7 +109,7 @@ impl NamedType {
             }
         } else {
             quote! {
-                #[derive(Clone, Debug, BorshDeserialize, BorshSerialize, PartialEq)]
+                #[derive(Clone, Copy, Debug, BorshDeserialize, BorshSerialize, PartialEq)]
             }
         };
 
