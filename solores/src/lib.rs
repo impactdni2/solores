@@ -3,12 +3,11 @@
 use std::{
     env,
     fs::{self, File, OpenOptions},
-    io::Seek,
     path::PathBuf,
 };
 
 use clap::{command, Parser};
-use idl_format::{bincode::BincodeIdl, IdlFormat};
+use idl_format::IdlFormat;
 
 use crate::idl_format::anchor::AnchorIdl;
 
@@ -167,14 +166,6 @@ pub fn main() {
 }
 
 pub fn load_idl(file: &mut File) -> Box<dyn IdlFormat> {
-    if let Ok(bincode_idl) = serde_json::from_reader::<&File, BincodeIdl>(file) {
-        if bincode_idl.is_correct_idl_format() {
-            log::info!("Successfully loaded bincode IDL");
-            return Box::new(bincode_idl);
-        }
-    }
-    file.rewind().unwrap();
-    // Assume anchor if unidentified
     match serde_json::from_reader::<&File, AnchorIdl>(file) {
         Ok(anchor_idl) => {
             log::info!("Successfully loaded anchor IDL");

@@ -14,7 +14,6 @@ This software is still in its early stages of development. USE AT YOUR OWN RISK.
   - [Installation](#installation)
   - [Examples](#examples)
     - [Anchor IDL](#anchor-idl)
-    - [Bincode IDL](#bincode-idl)
   - [Features](#features)
     - [Serde](#serde)
     - [Keys From Array](#keys-from-array)
@@ -33,7 +32,6 @@ This software is still in its early stages of development. USE AT YOUR OWN RISK.
 ## Supported IDL Formats
 
 - [Anchor](https://github.com/coral-xyz/anchor)
-- [Bincode](https://github.com/solana-labs/solana)
 
 ## Installation
 
@@ -49,13 +47,6 @@ For anchor IDLs, the crate will also:
 - create a `*Account` newtype that includes account discriminant checking in borsh serde operations
 - export event struct defs
 
-### Bincode IDL
-
-For supporting older solana programs (system, stake), solores also supports a custom bincode IDL format identified by `{ "metadata": { "origin": "bincode" }}`.
-
-The instructions must be declared in enum order to work with bincode.
-
-No account definitions are supported, since system and stake program have their account defs in `solana-program` already.
 
 ## Features
 
