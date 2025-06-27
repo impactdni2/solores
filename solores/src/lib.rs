@@ -10,7 +10,7 @@ use std::{
 use clap::{command, Parser};
 use idl_format::{bincode::BincodeIdl, IdlFormat};
 
-use crate::idl_format::{anchor::AnchorIdl, shank::ShankIdl};
+use crate::idl_format::anchor::AnchorIdl;
 
 // Just make all mods pub to allow ppl to use the lib
 
@@ -167,13 +167,6 @@ pub fn main() {
 }
 
 pub fn load_idl(file: &mut File) -> Box<dyn IdlFormat> {
-    if let Ok(shank_idl) = serde_json::from_reader::<&File, ShankIdl>(file) {
-        if shank_idl.is_correct_idl_format() {
-            log::info!("Successfully loaded shank IDL");
-            return Box::new(shank_idl);
-        }
-    }
-    file.rewind().unwrap();
     if let Ok(bincode_idl) = serde_json::from_reader::<&File, BincodeIdl>(file) {
         if bincode_idl.is_correct_idl_format() {
             log::info!("Successfully loaded bincode IDL");

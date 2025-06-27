@@ -15,7 +15,6 @@ keywords = [
     "anchor",
     "codegen",
     "metaplex",
-    "shank",
     "solana",
     "idl"
 ]

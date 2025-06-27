@@ -2320,37 +2320,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mpl_token_metadata_client_consumer"
-version = "0.1.0"
-dependencies = [
- "borsh 1.5.6",
- "mpl_token_metadata_interface",
- "solana-cli-config",
- "solana-sdk",
-]
-
-[[package]]
-name = "mpl_token_metadata_interface"
-version = "1.2.5"
-dependencies = [
- "borsh 1.5.6",
- "num-derive",
- "num-traits",
- "serde",
- "solana-program",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "mpl_token_metadata_onchain_consumer"
-version = "0.1.0"
-dependencies = [
- "borsh 1.5.6",
- "mpl_token_metadata_interface",
- "solana-program",
-]
-
-[[package]]
 name = "nix"
 version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2674,19 +2643,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fd23b938276f14057220b707937bcb42fa76dda7560e57a2da30cb52d557937"
 dependencies = [
  "num",
-]
-
-[[package]]
-name = "phoenix_v1_interface"
-version = "0.2.3"
-dependencies = [
- "borsh 1.5.6",
- "bytemuck",
- "num-derive",
- "num-traits",
- "serde",
- "solana-program",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -3546,51 +3502,6 @@ checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
 dependencies = [
  "digest 0.10.7",
  "keccak",
-]
-
-[[package]]
-name = "shank_ix_blank_interface"
-version = "0.0.0"
-dependencies = [
- "borsh 1.5.6",
- "serde",
- "solana-program",
-]
-
-[[package]]
-name = "shank_ix_no_accounts_interface"
-version = "0.0.0"
-dependencies = [
- "borsh 1.5.6",
- "serde",
- "solana-program",
-]
-
-[[package]]
-name = "shank_ix_no_accounts_pubkey_arg_interface"
-version = "0.0.0"
-dependencies = [
- "borsh 1.5.6",
- "serde",
- "solana-program",
-]
-
-[[package]]
-name = "shank_ix_no_args_interface"
-version = "0.0.0"
-dependencies = [
- "borsh 1.5.6",
- "serde",
- "solana-program",
-]
-
-[[package]]
-name = "shank_ix_no_privilege_interface"
-version = "0.0.0"
-dependencies = [
- "borsh 1.5.6",
- "serde",
- "solana-program",
 ]
 
 [[package]]

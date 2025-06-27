@@ -13,7 +13,6 @@ This software is still in its early stages of development. USE AT YOUR OWN RISK.
   - [Supported IDL Formats](#supported-idl-formats)
   - [Installation](#installation)
   - [Examples](#examples)
-    - [Shank IDL](#shank-idl)
     - [Anchor IDL](#anchor-idl)
     - [Bincode IDL](#bincode-idl)
   - [Features](#features)
@@ -33,8 +32,8 @@ This software is still in its early stages of development. USE AT YOUR OWN RISK.
 
 ## Supported IDL Formats
 
-- [Shank](https://github.com/metaplex-foundation/shank)
 - [Anchor](https://github.com/coral-xyz/anchor)
+- [Bincode](https://github.com/solana-labs/solana)
 
 ## Installation
 
@@ -42,133 +41,9 @@ This software is still in its early stages of development. USE AT YOUR OWN RISK.
 
 ## Examples
 
-### Shank IDL
-
-Lets say you had the following shank generated IDL, `my_token_idl.json`:
-
-```json
-{
-  "name": "my_token",
-  "instructions": [
-    {
-      "name": "transfer",
-      "accounts": [
-        {
-          "name": "src",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "dest",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "transferArgs",
-          "type": {
-            "defined": "TransferArgs"
-          }
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 0
-      }
-    }
-  ],
-  "types": [
-    {
-      "name": "TransferArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "amount",
-            "type": "u64"
-          }
-        ]
-      }
-    }
-  ]
-}
-```
-
-Running `solores my_token_idl.json` should generate a `my_token_interface` rust crate that allows you to use it in an on-chain program as so:
-
-```rust ignore
-use my_token_interface::{TransferAccounts, TransferArgs, TransferIxArgs, transfer_invoke_signed};
-use solana_program::{account_info::{AccountInfo, next_account_info}, entrypoint::ProgramResult, program::invoke, pubkey::Pubkey};
-
-pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], input: &[u8]) -> ProgramResult {
-    let account_info_iter = &mut accounts.iter();
-    let src = next_account_info(account_info_iter)?;
-    let dest = next_account_info(account_info_iter)?;
-
-    transfer_invoke_signed(
-        TransferAccounts { src, dest },
-        TransferIxArgs {
-            transfer_args: TransferArgs { amount: 1_000 },
-        },
-        &[&[&[0u8]]],
-    )
-}
-```
-
-or in a client-side app:
-
-```rust ignore
-use my_token_interface::{TransferKeys, TransferArgs, transfer_ix};
-
-pub fn do_something_with_instruction() -> std::io::Result<()> {
-    ...
-
-    let transfer_accounts = TransferKeys {
-        src: some_pubkey,
-        dest: another_pubkey,
-    };
-    let transfer_ix_args = TransferIxArgs {
-        transfer_args: TransferArgs { amount: 1_000 },
-    };
-    let ix = transfer_ix(transfer_accounts, transfer_ix_args)?;
-
-    ...
-}
-
-```
-
-The crate will also combine all instructions into a single borsh de/serializable `ProgramIx` enum
-
-```rust ignore
-use borsh::BorshSerialize;
-use my_token_interface::{MyTokenProgramIx, TransferArgs, TransferIxArgs};
-
-#[test]
-pub fn test_borsh_serde_roundtrip_program_ix() {
-    let program_ix = MyTokenProgramIx::Transfer(
-        TransferIxArgs {
-            transfer_args: TransferArgs { amount: 1 },
-        }
-    );
-
-    // [0, 1, 0, 0, 0, 0, 0, 0, 0]
-    let serialized = program_ix.try_to_vec().unwrap();
-
-    // note that deserialize is an associated function/method
-    // rather than the BorshDeserialize trait impl,
-    // i.e. MyTokenProgramIx does NOT impl BorshDeserialize
-    // since it doesn't follow the borsh spec
-    let deserialized = MyTokenProgramIx::deserialize(&serialized).unwrap();
-    assert_eq!(program_ix, deserialized);
-}
-```
-
-The crate will also export the instructions' discriminant as consts, and any error types defined in the IDL as an enum convertible to/from u32.
-
 ### Anchor IDL
 
-The usage for anchor IDLs is essentially the same as [Shank IDL's](#shank-idl). Additionally, the crate will also:
+For anchor IDLs, the crate will also:
 
 - export all accounts' discriminant as consts.
 - create a `*Account` newtype that includes account discriminant checking in borsh serde operations

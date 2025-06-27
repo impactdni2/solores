@@ -5,7 +5,6 @@ use toml::{map::Map, Value};
 
 pub mod anchor;
 pub mod bincode;
-pub mod shank;
 
 pub trait IdlCodegenModule {
     /// The module file's name e.g. "errors"
