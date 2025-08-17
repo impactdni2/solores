@@ -51,6 +51,7 @@ pub struct NamedType {
 #[derive(Deserialize)]
 pub struct Repr {
     pub kind: String,
+    #[serde(default)]
     pub packed: bool,
 }
 
