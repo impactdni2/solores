@@ -20,7 +20,6 @@ impl IdlCodegenModule for ErrorsCodegenModule<'_> {
     fn gen_head(&self) -> TokenStream {
         quote! {
             use solana_program::{
-                msg,
                 program_error::ProgramError,
             };
             use thiserror::Error;
