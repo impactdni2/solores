@@ -27,11 +27,11 @@ pub mod typedefs;
 pub struct AnchorIdl {
     pub address: String,
     pub metadata: Metadata,
-    pub accounts: Option<Vec<NamedAccount>>,
+    // pub accounts: Option<Vec<NamedAccount>>,
     pub types: Option<Vec<NamedType>>,
     pub instructions: Option<Vec<NamedInstruction>>,
     pub errors: Option<Vec<ErrorEnumVariant>>,
-    pub events: Option<Vec<Event>>,
+    // pub events: Option<Vec<Event>>,
 }
 
 #[derive(Deserialize)]
@@ -64,12 +64,12 @@ impl IdlFormat for AnchorIdl {
 
     fn modules<'me>(&'me self, args: &'me crate::Args) -> Vec<Box<dyn IdlCodegenModule + 'me>> {
         let mut res: Vec<Box<dyn IdlCodegenModule + 'me>> = Vec::new();
-        if let Some(v) = &self.accounts {
-            res.push(Box::new(AccountsCodegenModule {
-                cli_args: args,
-                named_accounts: v,
-            }));
-        }
+        // if let Some(v) = &self.accounts {
+        //     res.push(Box::new(AccountsCodegenModule {
+        //         cli_args: args,
+        //         named_accounts: v,
+        //     }));
+        // }
         if let Some(v) = &self.r#types {
             res.push(Box::new(TypedefsCodegenModule {
                 cli_args: args,
@@ -88,9 +88,9 @@ impl IdlFormat for AnchorIdl {
                 variants: v,
             }));
         }
-        if let Some(v) = &self.events {
-            res.push(Box::new(EventsCodegenModule(v)));
-        }
+        // if let Some(v) = &self.events {
+        //     res.push(Box::new(EventsCodegenModule(v)));
+        // }
         res
     }
 
