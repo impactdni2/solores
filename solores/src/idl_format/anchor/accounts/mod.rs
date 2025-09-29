@@ -21,7 +21,11 @@ impl IdlCodegenModule for AccountsCodegenModule<'_> {
             use borsh::{BorshDeserialize, BorshSerialize};
         };
         for a in self.named_accounts {
-            if self.cli_args.zero_copy.iter().any(|e| e == &a.0.name) {
+            let use_zero_copy = self.cli_args.zero_copy.iter().any(|e| e == &a.0.name)
+                || a.0.serialization.as_ref().map_or(false, |s| s == "bytemuck");
+            let use_unsafe_bytemuck = a.0.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
+
+            if use_zero_copy || use_unsafe_bytemuck {
                 res.extend(quote! {
                     use bytemuck::{Pod, Zeroable};
                 });

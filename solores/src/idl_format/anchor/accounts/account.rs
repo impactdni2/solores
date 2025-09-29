@@ -27,6 +27,7 @@ impl NamedAccount {
 
         let struct_ident = format_ident!("{}", conditional_pascal_case(name));
         let account_ident = format_ident!("{}Account", conditional_pascal_case(name));
+
         quote! {
             pub const #account_discm_ident: [u8; 8] = #discm_tokens;
 
