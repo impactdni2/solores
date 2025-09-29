@@ -238,7 +238,25 @@ pub struct EnumVariant {
 
 impl ToTokens for TypedefStruct {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let typedef_fields = self.fields.iter().map(|f| quote! { pub #f });
+        let typedef_fields = self.fields.iter().map(|f| {
+            // Check if this field needs serde_big_array attribute
+            let serde_attr = if let TypedefFieldType::array(TypedefFieldArray(_, len)) = &f.r#type {
+                if *len > 32 {
+                    quote! { #[cfg_attr(feature = "serde", serde(with = "serde_big_array::BigArray"))] }
+                } else {
+                    TokenStream::new()
+                }
+            } else {
+                TokenStream::new()
+            };
+
+            let name = format_ident!("{}", f.name.to_snake_case());
+            let ty = &f.r#type;
+            quote! {
+                #serde_attr
+                pub #name: #ty
+            }
+        });
         tokens.extend(quote! {
             #(#typedef_fields),*
         })

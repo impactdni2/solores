@@ -66,7 +66,11 @@ fn write_src_file<P: AsRef<Path>>(
     src_file_path: P,
     contents: TokenStream,
 ) -> std::io::Result<()> {
-    let unpretty = syn::parse2(contents).unwrap();
+    let unpretty = syn::parse2(contents.clone()).unwrap_or_else(|e| {
+        eprintln!("Failed to parse generated code: {}", e);
+        eprintln!("Generated token stream:\n{}", contents);
+        panic!("called `Result::unwrap()` on an `Err` value: {:?}", e);
+    });
     let formatted = prettyplease::unparse(&unpretty);
 
     let path = args.output_dir.join(src_file_path);

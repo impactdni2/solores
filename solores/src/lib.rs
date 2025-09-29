@@ -115,6 +115,13 @@ pub struct Args {
     )]
     pub serde_bytes_vers: String,
 
+    #[arg(
+        long,
+        help = "serde-big-array dependency version for generated crate",
+        default_value = "workspace = true"
+    )]
+    pub serde_big_array_vers: String,
+
     #[arg(long, help = "write gitignore file", default_value = "false")]
     pub write_gitignore: bool,
 

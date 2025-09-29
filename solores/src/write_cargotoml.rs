@@ -9,6 +9,7 @@ pub const BORSH_CRATE: &str = "borsh";
 pub const BYTEMUCK_CRATE: &str = "bytemuck";
 pub const SERDE_CRATE: &str = "serde";
 pub const SERDE_BYTES_CRATE: &str = "serde_bytes";
+pub const SERDE_BIG_ARRAY_CRATE: &str = "serde-big-array";
 pub const SOLANA_PROGRAM_CRATE: &str = "solana-program";
 pub const THISERROR_CRATE: &str = "thiserror";
 pub const NUM_DERIVE_CRATE: &str = "num-derive";
@@ -39,6 +40,7 @@ impl<'a> CargoToml<'a> {
             Value::Array(vec![
                 Value::String("dep:serde".into()),
                 Value::String("dep:serde_bytes".into()),
+                Value::String("dep:serde-big-array".into()),
             ]),
         );
 
