@@ -21,9 +21,9 @@ impl IdlCodegenModule for AccountsCodegenModule<'_> {
             use borsh::{BorshDeserialize, BorshSerialize};
         };
         for a in self.named_accounts {
-            let use_zero_copy = self.cli_args.zero_copy.iter().any(|e| e == &a.0.name)
-                || a.0.serialization.as_ref().map_or(false, |s| s == "bytemuck");
-            let use_unsafe_bytemuck = a.0.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
+            let use_zero_copy = self.cli_args.zero_copy.iter().any(|e| e == &a.name)
+                || a.type_def.serialization.as_ref().map_or(false, |s| s == "bytemuck");
+            let use_unsafe_bytemuck = a.type_def.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
 
             if use_zero_copy || use_unsafe_bytemuck {
                 res.extend(quote! {
@@ -35,13 +35,13 @@ impl IdlCodegenModule for AccountsCodegenModule<'_> {
         let mut has_pubkey = false;
         let mut has_defined = false;
         for a in self.named_accounts {
-            if a.0.r#type.has_pubkey_field() && !has_pubkey {
+            if a.type_def.r#type.has_pubkey_field() && !has_pubkey {
                 has_pubkey = true;
                 res.extend(quote! {
                     use solana_program::pubkey::Pubkey;
                 });
             }
-            if a.0.r#type.has_defined_field() && !has_defined {
+            if a.type_def.r#type.has_defined_field() && !has_defined {
                 has_defined = true;
                 res.extend(quote! {
                     use crate::*;

@@ -14,7 +14,7 @@ use crate::utils::{
 };
 
 // Custom struct to handle both string and object formats for "defined"
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum DefinedType {
     String(String),
@@ -39,7 +39,7 @@ where
     Ok(defined_type.name().to_string())
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct NamedType {
     pub name: String,
     pub r#type: TypedefType,
@@ -48,7 +48,7 @@ pub struct NamedType {
     pub repr: Option<Repr>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Repr {
     pub kind: String,
     #[serde(default)]
@@ -123,32 +123,60 @@ impl NamedType {
             TokenStream::new()
         };
 
-        quote! {
-            #repr_attr
-            #derive
-            #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-            pub struct #name {
-                #typedef_struct
+        // Generate struct definition (tuple vs named)
+        let struct_def = match &typedef_struct.fields {
+            StructFields::Named(_) => {
+                // Named struct: pub struct Name { fields }
+                quote! {
+                    #repr_attr
+                    #derive
+                    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+                    pub struct #name {
+                        #typedef_struct
+                    }
+                }
             }
-            
+            StructFields::Unnamed(_) => {
+                // Tuple struct: pub struct Name(fields);
+                quote! {
+                    #repr_attr
+                    #derive
+                    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+                    pub struct #name(#typedef_struct);
+                }
+            }
+        };
+
+        quote! {
+            #struct_def
             #unsafe_impls
         }
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "kind")]
 pub enum TypedefType {
     r#struct(TypedefStruct),
     r#enum(TypedefEnum),
 }
 
-#[derive(Deserialize)]
-pub struct TypedefStruct {
-    pub fields: Vec<TypedefField>,
+/// Represents struct fields which can be either named or unnamed (tuple)
+#[derive(Deserialize, Clone, Debug)]
+#[serde(untagged)]
+pub enum StructFields {
+    /// Named fields: [{"name": "x", "type": "u8"}]
+    Named(Vec<TypedefField>),
+    /// Unnamed/tuple fields: ["bool", "u8"]
+    Unnamed(Vec<TypedefFieldTypeWrap>),
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
+pub struct TypedefStruct {
+    pub fields: StructFields,
+}
+
+#[derive(Deserialize, Clone, Debug)]
 pub struct TypedefField {
     pub name: String,
     #[serde(deserialize_with = "string_or_struct")]
@@ -158,7 +186,7 @@ pub struct TypedefField {
 
 /// All instances should be annotated with
 /// deserialize_with = "string_or_struct"
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum TypedefFieldType {
     // handled by string_or_struct's string
     PrimitiveOrPubkey(String),
@@ -175,7 +203,7 @@ pub enum TypedefFieldType {
     vec(Box<TypedefFieldType>),
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct TypedefFieldArray(
     #[serde(deserialize_with = "string_or_struct")] Box<TypedefFieldType>,
     u32, // borsh spec says array sizes are u32
@@ -183,7 +211,7 @@ pub struct TypedefFieldArray(
 
 /// serde newtype workaround for use in Vec<TypedefFieldType>:
 /// https://github.com/serde-rs/serde/issues/723#issuecomment-871016087
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct TypedefFieldTypeWrap(#[serde(deserialize_with = "string_or_struct")] TypedefFieldType);
 
 impl FromStr for TypedefFieldType {
@@ -202,12 +230,12 @@ impl FromStr for Box<TypedefFieldType> {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct TypedefEnum {
     pub variants: Vec<EnumVariant>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum EnumVariantFields {
     Struct(Vec<TypedefField>),
@@ -230,7 +258,7 @@ impl EnumVariantFields {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct EnumVariant {
     pub name: String,
     pub fields: Option<EnumVariantFields>,
@@ -238,28 +266,42 @@ pub struct EnumVariant {
 
 impl ToTokens for TypedefStruct {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let typedef_fields = self.fields.iter().map(|f| {
-            // Check if this field needs serde_big_array attribute
-            let serde_attr = if let TypedefFieldType::array(TypedefFieldArray(_, len)) = &f.r#type {
-                if *len > 32 {
-                    quote! { #[cfg_attr(feature = "serde", serde(with = "serde_big_array::BigArray"))] }
-                } else {
-                    TokenStream::new()
-                }
-            } else {
-                TokenStream::new()
-            };
+        match &self.fields {
+            StructFields::Named(fields) => {
+                let typedef_fields = fields.iter().map(|f| {
+                    // Check if this field needs serde_big_array attribute
+                    let serde_attr = if let TypedefFieldType::array(TypedefFieldArray(_, len)) = &f.r#type {
+                        if *len > 32 {
+                            quote! { #[cfg_attr(feature = "serde", serde(with = "serde_big_array::BigArray"))] }
+                        } else {
+                            TokenStream::new()
+                        }
+                    } else {
+                        TokenStream::new()
+                    };
 
-            let name = format_ident!("{}", f.name.to_snake_case());
-            let ty = &f.r#type;
-            quote! {
-                #serde_attr
-                pub #name: #ty
+                    let name = format_ident!("{}", f.name.to_snake_case());
+                    let ty = &f.r#type;
+                    quote! {
+                        #serde_attr
+                        pub #name: #ty
+                    }
+                });
+                tokens.extend(quote! {
+                    #(#typedef_fields),*
+                })
             }
-        });
-        tokens.extend(quote! {
-            #(#typedef_fields),*
-        })
+            StructFields::Unnamed(fields) => {
+                // Tuple struct: just list the types
+                let typedef_fields = fields.iter().map(|f| {
+                    let ty = &f.0;
+                    quote! { pub #ty }
+                });
+                tokens.extend(quote! {
+                    #(#typedef_fields),*
+                })
+            }
+        }
     }
 }
 
@@ -335,18 +377,34 @@ impl ToTokens for EnumVariant {
     }
 }
 
+impl StructFields {
+    pub fn has_pubkey(&self) -> bool {
+        match self {
+            Self::Named(v) => v.iter().any(|f| f.r#type.is_or_has_pubkey()),
+            Self::Unnamed(v) => v.iter().any(|f| f.0.is_or_has_pubkey()),
+        }
+    }
+
+    pub fn has_defined(&self) -> bool {
+        match self {
+            Self::Named(v) => v.iter().any(|f| f.r#type.is_or_has_defined()),
+            Self::Unnamed(v) => v.iter().any(|f| f.0.is_or_has_defined()),
+        }
+    }
+}
+
 impl TypedefType {
     pub fn has_pubkey_field(&self) -> bool {
         match self {
             Self::r#enum(e) => e.variants.iter().any(|e| e.has_pubkey()),
-            Self::r#struct(s) => s.fields.iter().any(|f| f.r#type.is_or_has_pubkey()),
+            Self::r#struct(s) => s.fields.has_pubkey(),
         }
     }
 
     pub fn has_defined_field(&self) -> bool {
         match self {
             Self::r#enum(e) => e.variants.iter().any(|e| e.has_defined()),
-            Self::r#struct(s) => s.fields.iter().any(|f| f.r#type.is_or_has_defined()),
+            Self::r#struct(s) => s.fields.has_defined(),
         }
     }
 }
