@@ -39,6 +39,7 @@ itertools = { workspace = true }
 prettyplease = { workspace = true }
 log = { workspace = true }
 log-panics = { workspace = true, features = ["with-backtrace"]}
+pinocchio = { version = "0.10.2", features = ["copy"] }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

@@ -122,6 +122,13 @@ pub struct Args {
     )]
     pub serde_big_array_vers: String,
 
+    #[arg(
+        long,
+        help = "pinocchio dependency version for generated crate",
+        default_value = "workspace = true"
+    )]
+    pub pinocchio_vers: String,
+
     #[arg(long, help = "write gitignore file", default_value = "false")]
     pub write_gitignore: bool,
 

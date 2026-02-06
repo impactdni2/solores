@@ -14,6 +14,7 @@ pub const SOLANA_PROGRAM_CRATE: &str = "solana-program";
 pub const THISERROR_CRATE: &str = "thiserror";
 pub const NUM_DERIVE_CRATE: &str = "num-derive";
 pub const NUM_TRAITS_CRATE: &str = "num-traits";
+pub const PINOCCHIO_CRATE: &str = "pinocchio";
 
 pub fn write_cargotoml(args: &Args, idl: &dyn IdlFormat) -> std::io::Result<()> {
     let cargo_toml = CargoToml::from_args_and_idl(args, idl);
@@ -42,6 +43,10 @@ impl<'a> CargoToml<'a> {
                 Value::String("dep:serde_bytes".into()),
                 Value::String("dep:serde-big-array".into()),
             ]),
+        );
+        features.insert(
+            "pinocchio".into(),
+            Value::Array(vec![Value::String("dep:pinocchio".into())]),
         );
 
         Self {

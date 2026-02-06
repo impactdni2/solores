@@ -49,10 +49,22 @@ pub fn write_lib(args: &Args, idl: &dyn IdlFormat) -> std::io::Result<()> {
     for module in idl.modules(args) {
         let module_name = module.name();
         let module_ident = Ident::new(module.name(), Span::call_site());
-        contents.extend(quote! {
-            pub mod #module_ident;
-            pub use #module_ident::*;
-        });
+
+        // Wrap pinocchio module in cfg feature attribute
+        if module_name == "instructions_pinocchio" {
+            contents.extend(quote! {
+                #[cfg(feature = "pinocchio")]
+                pub mod #module_ident;
+                #[cfg(feature = "pinocchio")]
+                pub use #module_ident::*;
+            });
+        } else {
+            contents.extend(quote! {
+                pub mod #module_ident;
+                pub use #module_ident::*;
+            });
+        }
+
         let mut module_contents = module.gen_head();
         module_contents.extend(module.gen_body());
         write_src_file(args, &format!("src/{module_name}.rs"), module_contents)?;

@@ -3,8 +3,8 @@ use toml::{map::Map, Value};
 
 use crate::write_cargotoml::{
     DependencyValue, FeaturesDependencyValue, OptionalDependencyValue, BORSH_CRATE, BYTEMUCK_CRATE,
-    NUM_DERIVE_CRATE, NUM_TRAITS_CRATE, SERDE_BIG_ARRAY_CRATE, SERDE_BYTES_CRATE, SERDE_CRATE,
-    SOLANA_PROGRAM_CRATE, THISERROR_CRATE,
+    NUM_DERIVE_CRATE, NUM_TRAITS_CRATE, PINOCCHIO_CRATE, SERDE_BIG_ARRAY_CRATE, SERDE_BYTES_CRATE,
+    SERDE_CRATE, SOLANA_PROGRAM_CRATE, THISERROR_CRATE,
 };
 
 use super::{IdlCodegenModule, IdlFormat};
@@ -13,6 +13,7 @@ use self::{
     accounts::{AccountsCodegenModule, NamedAccount, RawNamedAccount},
     errors::{ErrorEnumVariant, ErrorsCodegenModule},
     instructions::{IxCodegenModule, NamedInstruction},
+    instructions_pinocchio::IxPinocchioCodegenModule,
     typedefs::{NamedType, TypedefsCodegenModule},
 };
 
@@ -20,6 +21,7 @@ pub mod accounts;
 pub mod errors;
 pub mod events;
 pub mod instructions;
+pub mod instructions_pinocchio;
 pub mod typedefs;
 
 #[derive(Deserialize)]
@@ -59,7 +61,10 @@ impl AnchorIdl {
                 }
                 RawNamedAccount::Reference(ref_account) => {
                     // New format: look up type definition in types array
-                    let type_def = self.types.as_ref()?.iter()
+                    let type_def = self
+                        .types
+                        .as_ref()?
+                        .iter()
                         .find(|t| t.name == ref_account.name)?
                         .clone();
 
@@ -81,9 +86,12 @@ impl AnchorIdl {
         let types = self.types.as_ref()?;
 
         // Get set of account names
-        let account_names: std::collections::HashSet<String> = self.accounts.as_ref()
+        let account_names: std::collections::HashSet<String> = self
+            .accounts
+            .as_ref()
             .map(|accounts| {
-                accounts.iter()
+                accounts
+                    .iter()
                     .filter_map(|raw| match raw {
                         RawNamedAccount::Reference(r) => Some(r.name.clone()),
                         RawNamedAccount::Full(f) => Some(f.name.clone()),
@@ -93,7 +101,8 @@ impl AnchorIdl {
             .unwrap_or_default();
 
         // Filter out account types
-        let non_account_types: Vec<NamedType> = types.iter()
+        let non_account_types: Vec<NamedType> = types
+            .iter()
             .filter(|t| !account_names.contains(&t.name))
             .cloned()
             .collect();
@@ -158,6 +167,7 @@ impl IdlFormat for AnchorIdl {
                 program_name: self.program_name(),
                 instructions: v,
             }));
+            res.push(Box::new(IxPinocchioCodegenModule { instructions: v }));
         }
         if let Some(v) = &self.errors {
             res.push(Box::new(ErrorsCodegenModule {
@@ -197,6 +207,15 @@ impl IdlFormat for AnchorIdl {
         map.insert(
             SERDE_BIG_ARRAY_CRATE.into(),
             OptionalDependencyValue(DependencyValue(&args.serde_big_array_vers)).into(),
+        );
+        // Pinocchio is optional with "copy" feature
+        map.insert(
+            PINOCCHIO_CRATE.into(),
+            FeaturesDependencyValue {
+                dependency: OptionalDependencyValue(DependencyValue(&args.pinocchio_vers)),
+                features: vec!["copy".into(), "cpi".into()],
+            }
+            .into(),
         );
         if self.errors.is_some() {
             map.insert(
