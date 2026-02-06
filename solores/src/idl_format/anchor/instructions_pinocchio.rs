@@ -41,7 +41,7 @@ fn gen_pinocchio_view(ix: &NamedInstruction) -> TokenStream {
     let mut tokens = TokenStream::new();
 
     write_view_struct(ix, &mut tokens, &accounts);
-    write_from_account_view_arr_for_view(ix, &mut tokens, &accounts);
+    write_from_account_view_arr_for_view(ix, &mut tokens);
     write_from_view_for_account_view_arr(ix, &mut tokens, &accounts);
     write_from_view_for_account_view_vec(ix, &mut tokens);
     write_from_view_for_instruction_account_arr(ix, &mut tokens, &accounts);
@@ -53,44 +53,39 @@ fn view_ident(ix: &NamedInstruction) -> proc_macro2::Ident {
     format_ident!("{}View", ix.name.to_pascal_case())
 }
 
-/// Generate the View struct
+/// Generate the View struct as a tuple struct with getter methods
 fn write_view_struct(ix: &NamedInstruction, tokens: &mut TokenStream, accounts: &[IxAccount]) {
     let view_ident = view_ident(ix);
-    let view_fields = accounts.iter().map(|acc| {
+    let accounts_len_ident = ix.accounts_len_ident();
+
+    let getters = accounts.iter().enumerate().map(|(i, acc)| {
         let account_name = format_ident!("{}", &acc.name.to_snake_case());
+        let index_lit = LitInt::new(&i.to_string(), Span::call_site());
         quote! {
-            pub #account_name: &'a AccountView
+            pub fn #account_name(&self) -> &'a AccountView {
+                &self.0[#index_lit]
+            }
         }
     });
+
     tokens.extend(quote! {
         #[derive(Copy, Clone, Debug)]
-        pub struct #view_ident<'a> {
-            #(#view_fields),*
+        pub struct #view_ident<'a>(pub &'a [AccountView; #accounts_len_ident]);
+
+        impl<'a> #view_ident<'a> {
+            #(#getters)*
         }
     });
 }
 
 /// From<&'a [AccountView; N]> for XView<'a>
-fn write_from_account_view_arr_for_view(
-    ix: &NamedInstruction,
-    tokens: &mut TokenStream,
-    accounts: &[IxAccount],
-) {
+fn write_from_account_view_arr_for_view(ix: &NamedInstruction, tokens: &mut TokenStream) {
     let view_ident = view_ident(ix);
     let accounts_len_ident = ix.accounts_len_ident();
-    let from_fields = accounts.iter().enumerate().map(|(i, acc)| {
-        let account_ident = format_ident!("{}", &acc.name.to_snake_case());
-        let index_lit = LitInt::new(&i.to_string(), Span::call_site());
-        quote! {
-            #account_ident: &arr[#index_lit]
-        }
-    });
     tokens.extend(quote! {
         impl<'a> From<&'a [AccountView; #accounts_len_ident]> for #view_ident<'a> {
             fn from(arr: &'a [AccountView; #accounts_len_ident]) -> Self {
-                Self {
-                    #(#from_fields),*
-                }
+                Self(arr)
             }
         }
     });
@@ -107,7 +102,7 @@ fn write_from_view_for_account_view_arr(
     let view_fields = accounts.iter().map(|acc| {
         let account_ident = format_ident!("{}", &acc.name.to_snake_case());
         quote! {
-            view.#account_ident
+            view.#account_ident()
         }
     });
     tokens.extend(quote! {
@@ -149,7 +144,7 @@ fn write_from_view_for_instruction_account_arr(
         let is_writable = LitBool::new(acc.writable, Span::call_site());
         quote! {
             InstructionAccount {
-                address: view.#account_ident.address(),
+                address: view.#account_ident().address(),
                 is_signer: #is_signer,
                 is_writable: #is_writable,
             }
