@@ -43,6 +43,7 @@ fn gen_pinocchio_view(ix: &NamedInstruction) -> TokenStream {
     write_view_struct(ix, &mut tokens, &accounts);
     write_from_account_view_arr_for_view(ix, &mut tokens, &accounts);
     write_from_view_for_account_view_arr(ix, &mut tokens, &accounts);
+    write_from_view_for_account_view_vec(ix, &mut tokens);
     write_from_view_for_instruction_account_arr(ix, &mut tokens, &accounts);
 
     tokens
@@ -115,6 +116,20 @@ fn write_from_view_for_account_view_arr(
                 [
                     #(#view_fields),*
                 ]
+            }
+        }
+    });
+}
+
+/// From<&'a XView<'a>> for Vec<&'a AccountView>
+fn write_from_view_for_account_view_vec(ix: &NamedInstruction, tokens: &mut TokenStream) {
+    let view_ident = view_ident(ix);
+    let accounts_len_ident = ix.accounts_len_ident();
+    tokens.extend(quote! {
+        impl<'a> From<&'a #view_ident<'a>> for Vec<&'a AccountView> {
+            fn from(view: &'a #view_ident<'a>) -> Self {
+                let arr: [&'a AccountView; #accounts_len_ident] = view.into();
+                Vec::from(arr)
             }
         }
     });
