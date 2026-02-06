@@ -22,8 +22,8 @@ impl IdlCodegenModule for TypedefsCodegenModule<'_> {
         };
         for a in self.named_types {
             let use_zero_copy = self.cli_args.zero_copy.iter().any(|e| e == &a.name) ||
-                a.serialization.as_ref().map_or(false, |s| s == "bytemuck");
-            let use_unsafe_bytemuck = a.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
+                a.content.serialization.as_ref().map_or(false, |s| s == "bytemuck");
+            let use_unsafe_bytemuck = a.content.serialization.as_ref().map_or(false, |s| s == "bytemuckunsafe");
             if use_zero_copy || use_unsafe_bytemuck {
                 res.extend(quote! {
                     use bytemuck::{Pod, Zeroable};
@@ -32,7 +32,7 @@ impl IdlCodegenModule for TypedefsCodegenModule<'_> {
             }
         }
         for t in self.named_types {
-            if t.r#type.has_pubkey_field() {
+            if t.content.r#type.has_pubkey_field() {
                 res.extend(quote! {
                     use solana_program::pubkey::Pubkey;
                 });

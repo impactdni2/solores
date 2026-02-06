@@ -11,7 +11,7 @@ members = [
     "examples/anchor/marinade/*",
     "examples/anchor/unstake_it/*",
     "solores",
-    "test_utils"
+    "test_utils",
 ]
 
 [workspace.dependencies]
@@ -32,6 +32,8 @@ proc-macro2 = "^1.0"
 quote = "^1.0"
 rand = "^0.8"
 serde = "^1"
+serde-big-array = "0.5.1"
+serde_bytes = "0.11.19"
 serde_json = "^1"
 sha2 = "^0.10"
 solana-cli-config = "^2.1"

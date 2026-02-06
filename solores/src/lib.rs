@@ -6,7 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-use clap::{command, Parser};
+use clap::Parser;
 use idl_format::IdlFormat;
 
 use crate::idl_format::anchor::AnchorIdl;

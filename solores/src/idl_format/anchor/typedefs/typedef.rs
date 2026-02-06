@@ -39,13 +39,28 @@ where
     Ok(defined_type.name().to_string())
 }
 
+/// The content of a type definition without the name field
+/// Used when flattening into structs that already have a name field
 #[derive(Deserialize, Clone, Debug)]
-pub struct NamedType {
-    pub name: String,
+pub struct TypeContent {
     pub r#type: TypedefType,
     pub docs: Option<Vec<String>>,
     pub serialization: Option<String>,
     pub repr: Option<Repr>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct NamedType {
+    pub name: String,
+    #[serde(flatten)]
+    pub content: TypeContent,
+}
+
+impl NamedType {
+    /// Create a NamedType from a name and TypeContent
+    pub fn from_name_and_content(name: String, content: TypeContent) -> Self {
+        Self { name, content }
+    }
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -59,7 +74,7 @@ impl NamedType {
     pub fn to_token_stream(&self, cli_args: &crate::Args) -> TokenStream {
         let name = format_ident!("{}", conditional_pascal_case(&self.name));
         // rust enums cannot impl Pod due to illegal bitpatterns
-        let typedef_struct = match &self.r#type {
+        let typedef_struct = match &self.content.r#type {
             TypedefType::r#struct(typedef_struct) => typedef_struct,
             TypedefType::r#enum(typedef_enum) => {
                 return quote! {
@@ -75,18 +90,20 @@ impl NamedType {
         // Check if this type should use zero-copy derives from CLI args or IDL serialization field
         let use_zero_copy = cli_args.zero_copy.iter().any(|e| e == &self.name)
             || self
+                .content
                 .serialization
                 .as_ref()
                 .map_or(false, |s| s == "bytemuck");
-        
+
         // Check if this type should use unsafe bytemuck
         let use_unsafe_bytemuck = self
+            .content
             .serialization
             .as_ref()
             .map_or(false, |s| s == "bytemuckunsafe");
 
         // Generate repr attribute based on CLI args or IDL repr field
-        let repr_attr = if let Some(repr) = &self.repr {
+        let repr_attr = if let Some(repr) = &self.content.repr {
             let kind = if repr.kind == "c" { "C" } else { &repr.kind };
             let kind = format_ident!("{}", kind);
             if repr.packed {

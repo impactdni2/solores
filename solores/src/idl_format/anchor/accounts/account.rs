@@ -4,7 +4,7 @@ use quote::{format_ident, quote};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
-use crate::idl_format::anchor::typedefs::NamedType;
+use crate::idl_format::anchor::typedefs::{NamedType, TypeContent};
 use crate::utils::conditional_pascal_case;
 
 /// Represents an account reference in the new IDL format (spec 0.1.0)
@@ -21,7 +21,7 @@ pub struct NamedAccountRef {
 pub struct NamedAccountFull {
     pub name: String,
     #[serde(flatten)]
-    pub type_def: NamedType,
+    pub type_content: TypeContent,
 }
 
 /// Unified account representation that supports both old and new IDL formats
@@ -46,8 +46,8 @@ impl NamedAccount {
     /// Create from old format (inline type definition)
     pub fn from_full(full: NamedAccountFull) -> Self {
         Self {
-            name: full.name,
-            type_def: full.type_def,
+            name: full.name.clone(),
+            type_def: NamedType::from_name_and_content(full.name, full.type_content),
             discriminator: None, // Will be computed from name
         }
     }
